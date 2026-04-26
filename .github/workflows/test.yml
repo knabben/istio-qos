@@ -1,0 +1,52 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Build, Unit & Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Cache local bin tools
+        uses: actions/cache@v4
+        with:
+          path: bin/
+          key: bin-${{ runner.os }}-${{ hashFiles('Makefile') }}
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Unit + Integration tests (envtest)
+        run: |
+          go mod tidy
+          make test
+
+      - name: Enforce coverage threshold (controller package ≥80%)
+        run: |
+          TOTAL=$(go tool cover -func cover.out | grep '^total:' | awk '{print $3}' | tr -d '%')
+          CONTROLLER=$(go tool cover -func cover.out \
+            | awk '/internal\/controller/ && /total:/ {print $3}' | tr -d '%')
+          COVERAGE=${CONTROLLER:-$TOTAL}
+          echo "Controller package coverage: ${COVERAGE}%"
+          awk -v c="$COVERAGE" 'BEGIN {
+            if (c+0 < 80) { print "FAIL: " c "% < 80%"; exit 1 }
+            print "PASS: " c "% >= 80%"
+          }'
+
+      - name: Race detector (unit + integration tests)
+        run: make test-race
