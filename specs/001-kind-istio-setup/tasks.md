@@ -141,7 +141,24 @@ the full setup by following it alone.
 
 ---
 
-## Phase 6: Polish & Cross-Cutting Concerns
+## Phase 6: User Story 4 — Observability Stack (Priority: P2)
+
+**Goal**: Install Prometheus, Grafana, Jaeger, and Kiali by default as part of
+`hack/install-istio.sh`. `SKIP_ADDONS=true` bypasses the step. README documents access.
+
+**Independent Test**: After `bash hack/install-istio.sh`, all four add-on deployments
+reach Ready in `istio-system` and `istioctl dashboard kiali` opens without error.
+
+- [x] T020 [US4] Restructure `hack/install-istio.sh`: add `SKIP_ADDONS="${SKIP_ADDONS:-false}"` top-level variable; add `install_addons()` function that iterates `prometheus grafana jaeger kiali` in order, checking `kubectl get deployment <addon> -n istio-system` for idempotency before each `kubectl apply -f <ADDONS_BASE>/<addon>.yaml`; waits for `kiali` rollout status with a 180s timeout; update `main()` to NOT exit 0 early when `istio-system` already exists — instead skip control plane but still run `install_addons()` unless `SKIP_ADDONS=true`
+- [x] T021 [US4] Update `print_summary()` in `hack/install-istio.sh` to show four `istioctl dashboard` access commands (kiali port 20001, grafana port 3000, jaeger port 16686, prometheus port 9090)
+- [x] T022 [P] [US4] Add **Observability Dashboards** section to `README.md` between Step 2 and Step 3: include dashboard table (`istioctl dashboard kiali/grafana/jaeger/prometheus`), update customization table with `SKIP_ADDONS` row, add Kiali troubleshooting entry
+
+**Checkpoint**: `bash hack/install-istio.sh` installs control plane + all four add-ons;
+second run is idempotent; `SKIP_ADDONS=true` skips add-ons cleanly.
+
+---
+
+## Phase 8: Polish & Cross-Cutting Concerns
 
 **Purpose**: Teardown script, final executable permissions check, and end-to-end
 integration verification.

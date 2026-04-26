@@ -75,14 +75,20 @@ Expected output:
 ```
 [install-istio] Installing Istio 1.24.2 (profile: demo) ...
 [install-istio] Waiting for Istio pods to become ready (timeout: 300s) ...
-[install-istio] Done. Istio 1.24.2 is ready.
+[install-istio] Installing observability add-ons (Prometheus → Grafana → Jaeger → Kiali) ...
+[install-istio]   Installing prometheus ...
+[install-istio]   Installing grafana ...
+[install-istio]   Installing jaeger ...
+[install-istio]   Installing kiali ...
+[install-istio] Waiting for Kiali to be ready (timeout: 180s) ...
+[install-istio] Setup complete. Istio 1.24.2 is ready.
 ```
 
 **Verify:**
 
 ```bash
 kubectl get pods -n istio-system
-# All pods should show Running or Completed status
+# All pods — including grafana, jaeger, kiali, prometheus — should show Running
 
 kubectl get crd | grep istio.io
 # Lists DestinationRule, VirtualService, PeerAuthentication, etc.
@@ -90,7 +96,29 @@ kubectl get crd | grep istio.io
 
 ---
 
-### Step 3 — Use the Local Registry
+### Step 3 — Access Observability Dashboards
+
+The following commands each open a dashboard in your browser via `istioctl` port-forward.
+Keep the terminal open while using the dashboard.
+
+| Dashboard  | Command                           | URL                        | What it shows |
+|------------|-----------------------------------|----------------------------|---------------|
+| **Kiali**  | `istioctl dashboard kiali`        | http://localhost:20001     | Service mesh topology, tier routing, traffic animation |
+| Grafana    | `istioctl dashboard grafana`      | http://localhost:3000      | Istio metrics: request rate, error rate, latency |
+| Jaeger     | `istioctl dashboard jaeger`       | http://localhost:16686     | Distributed request traces across mesh hops |
+| Prometheus | `istioctl dashboard prometheus`   | http://localhost:9090      | Raw Prometheus query UI |
+
+**Kiali walkthrough** — after deploying the `config/samples/` resources:
+
+1. Open Kiali → **Graph → Namespace: default**
+2. Enable **Traffic Animation** from the Display menu
+3. Send traffic with and without `user-type: premium` header — the active path switches
+   between `high-priority-pods` and `standard-pods` subsets
+4. Click any workload to see its `tier` label in the sidebar
+
+---
+
+### Step 5 — Use the Local Registry
 
 Build and push the controller image, then deploy it into the cluster:
 
@@ -132,6 +160,7 @@ second time on an already-configured environment exits 0 and makes no changes.
 | `ISTIO_VERSION` | `1.24.2` | Istio version to install |
 | `ISTIO_PROFILE` | `demo` | istioctl install profile |
 | `READY_TIMEOUT` | `300` | Seconds to wait for Istio pods to become ready |
+| `SKIP_ADDONS` | (unset) | Set to `true` to skip Prometheus/Grafana/Jaeger/Kiali install |
 
 Example override:
 
@@ -183,6 +212,26 @@ kubectl describe pod -n istio-system <pod-name>
 ```bash
 curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.24.2 sh -
 export PATH="$PWD/istio-1.24.2/bin:$PATH"
+```
+
+**Kiali add-on fails to install (network timeout):**
+
+```bash
+# Retry the add-ons step only (Istio control plane already installed):
+bash hack/install-istio.sh
+# The script skips the control plane re-install and retries any missing add-ons.
+
+# Or skip add-ons entirely on a resource-constrained machine:
+SKIP_ADDONS=true bash hack/install-istio.sh
+```
+
+**Kiali shows no graph / "No namespaces found":**
+
+```bash
+# Label the namespace for sidecar injection so Kiali can observe traffic:
+kubectl label namespace default istio-injection=enabled
+# Restart existing pods to pick up the sidecar:
+kubectl rollout restart deployment -n default
 ```
 
 ---
