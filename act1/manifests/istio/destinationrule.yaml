@@ -1,0 +1,23 @@
+# Istio DestinationRule — defines two subsets of my-service based on
+# the labels the podlabeler controller applies to pods.
+#
+# - high-priority-pods: pods labeled tier=high (app1)
+# - standard-pods:      pods labeled tier=standard (app2)
+#
+# When the controller misbehaves and labels flicker between subsets, Istiod
+# pushes new endpoint configuration to every sidecar in the mesh on every
+# flip. This is the visible Act I symptom on the Kiali dashboard.
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: my-service-tiers
+  namespace: my-service
+spec:
+  host: my-service.my-service.svc.cluster.local
+  subsets:
+    - name: high-priority-pods
+      labels:
+        tier: high
+    - name: standard-pods
+      labels:
+        tier: standard

@@ -1,0 +1,47 @@
+# Deployment for the podlabeler controller.
+#
+# Note: replicas is 2 — this is HA in production but here it amplifies BUG 3
+# (no leader election). Both replicas reconcile every event, fight over labels,
+# and trigger Istio config push storms.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podlabeler-controller
+  namespace: podlabeler-system
+  labels:
+    app: podlabeler-controller
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: podlabeler-controller
+  template:
+    metadata:
+      labels:
+        app: podlabeler-controller
+    spec:
+      serviceAccountName: podlabeler-controller
+      containers:
+        - name: manager
+          image: podlabeler:dev
+          imagePullPolicy: IfNotPresent
+          args:
+            - --metrics-bind-address=:8080
+            - --health-probe-bind-address=:8081
+            - --zap-log-level=info
+          ports:
+            - containerPort: 8080
+              name: metrics
+            - containerPort: 8081
+              name: health
+          livenessProbe:
+            httpGet: { path: /healthz, port: health }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /readyz, port: health }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits:   { cpu: 200m, memory: 128Mi }
