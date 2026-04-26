@@ -91,6 +91,40 @@ out-of-band assistance.
 
 ---
 
+---
+
+### User Story 4 - Access Live Istio Observability Tools (Priority: P2)
+
+After Istio is installed, a developer needs the standard Istio observability stack (Kiali,
+Prometheus, Grafana, Jaeger) available in the cluster so they can watch traffic flows, inspect
+tier-label routing decisions, and trace individual requests in real time — without installing
+anything extra.
+
+**Why this priority**: The tier-label controller's output is only meaningful when a developer
+can observe Istio routing live. Without Kiali and Grafana, a developer must infer mesh
+behaviour from raw `kubectl` commands, making local testing slow and opaque.
+
+**Independent Test**: After running `hack/install-istio.sh`, all four add-on deployments
+(`kiali`, `prometheus`, `grafana`, `jaeger`) reach Ready state in `istio-system`, and
+`istioctl dashboard kiali` opens the Kiali UI without error.
+
+**Acceptance Scenarios**:
+
+1. **Given** Istio is installed via `hack/install-istio.sh`, **When** the script finishes,
+   **Then** Kiali, Prometheus, Grafana, and Jaeger deployments are all Running in the
+   `istio-system` namespace with no extra manual steps required.
+2. **Given** the observability stack is running, **When** the developer runs
+   `istioctl dashboard kiali`, **Then** the Kiali service graph opens in a browser showing
+   the mesh topology.
+3. **Given** traffic flows between services in the mesh, **When** the developer opens the
+   Kiali graph view, **Then** they can see live call rates, error percentages, and the
+   `tier` label on each workload.
+4. **Given** the observability stack is already installed, **When** the developer re-runs
+   `hack/install-istio.sh`, **Then** the script detects existing add-on resources and
+   skips re-installation without error.
+
+---
+
 ### Edge Cases
 
 - What happens when Docker is not running when a script is executed?
@@ -121,7 +155,24 @@ out-of-band assistance.
   commands to confirm each step completed correctly.
 - **FR-007**: The `README.md` MUST document the exact commands a developer must run to
   complete the full setup sequence from an empty machine to a running kind cluster with
-  local registry and Istio.
+  local registry, Istio, and the observability stack.
+- **FR-008**: The `hack/install-istio.sh` script MUST install the following Istio
+  observability add-ons **by default** immediately after the Istio control plane is ready,
+  using the official Istio sample add-on manifests pinned to the same `ISTIO_VERSION`:
+  - **Prometheus** — metrics collection; required by Kiali
+  - **Grafana** — metrics dashboards with pre-built Istio traffic panels
+  - **Jaeger** — distributed request tracing
+  - **Kiali** — service mesh topology and traffic graph (requires Prometheus)
+- **FR-009**: The script MUST install add-ons in dependency order (Prometheus → Grafana →
+  Jaeger → Kiali) and wait for each deployment to reach Ready state before proceeding, so
+  the environment is fully operational when the script exits.
+- **FR-010**: Add-on installation MUST be skippable via `SKIP_ADDONS=true` for developers
+  who need a minimal Istio-only setup (e.g., resource-constrained machines).
+- **FR-011**: The `README.md` MUST document how to access each dashboard:
+  - `istioctl dashboard kiali` → Kiali service graph (port 20001)
+  - `istioctl dashboard grafana` → Grafana dashboards (port 3000)
+  - `istioctl dashboard jaeger` → Jaeger trace explorer (port 16686)
+  - `istioctl dashboard prometheus` → Prometheus query UI (port 9090)
 
 ### Key Entities
 
@@ -132,6 +183,9 @@ out-of-band assistance.
 - **Istio Installation**: The Istio service mesh control plane deployed inside the kind
   cluster, providing the `DestinationRule` and `VirtualService` support needed for tier-based
   routing tests.
+- **Observability Stack**: Four add-ons deployed into `istio-system` alongside Istio:
+  Prometheus (metrics), Grafana (dashboards), Jaeger (tracing), and Kiali (mesh topology
+  graph). Kiali is the primary live-traffic inspection tool.
 - **`hack/` Directory**: The repository directory containing all setup and installation scripts
   for the local development environment.
 
@@ -148,6 +202,12 @@ out-of-band assistance.
   a prerequisite is absent — no script fails silently or produces a cryptic error.
 - **SC-004**: All Istio system components reach Ready state within 5 minutes of the install
   script completing on a standard developer machine.
+- **SC-005**: All four observability add-ons (Prometheus, Grafana, Jaeger, Kiali) reach
+  Running state within 3 minutes of add-on installation completing.
+- **SC-006**: `istioctl dashboard kiali` opens the Kiali UI in a browser with the service
+  graph visible within 30 seconds of issuing the command.
+- **SC-007**: A developer following `README.md` can view live tier-label routing decisions
+  in the Kiali service graph within 20 minutes of starting the full setup from scratch.
 
 ## Assumptions
 

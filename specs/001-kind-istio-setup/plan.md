@@ -7,8 +7,10 @@
 
 Create a reproducible local development environment for `mesh-priority-controller` using
 a kind cluster wired to a local container registry (port 5000), with Istio installed via
-`istioctl` using the `demo` profile. Two idempotent shell scripts in `hack/` drive the
-setup sequence; a `README.md` documents the full procedure for new contributors.
+`istioctl` using the `demo` profile, and the full Istio observability stack (Prometheus,
+Grafana, Jaeger, Kiali) installed by default as part of the same setup. Two idempotent
+shell scripts in `hack/` drive the setup sequence; a `README.md` documents the full
+procedure including dashboard access commands.
 
 ## Technical Context
 
@@ -62,11 +64,15 @@ specs/001-kind-istio-setup/
 ```text
 hack/
 ├── bootstrap.sh          # US1: Create kind cluster + local registry
-├── install-istio.sh      # US2: Install Istio service mesh
+├── install-istio.sh      # US2: Install Istio + US4: Install observability add-ons
 └── teardown.sh           # Cleanup: delete cluster + stop registry
 
-README.md                 # US3: Full setup documentation
+README.md                 # US3: Full setup documentation + dashboard access commands
 ```
+
+**US4 is bundled into `install-istio.sh`**: After the Istio control plane reaches Ready
+state, the script installs Prometheus → Grafana → Jaeger → Kiali in order and waits for
+Kiali's deployment rollout. `SKIP_ADDONS=true` bypasses this step entirely.
 
 **Structure Decision**: Single project layout. Shell scripts are co-located under `hack/`
 at the repo root. No `src/` tree needed — this feature is entirely tooling and documentation.
@@ -90,6 +96,9 @@ See [research.md](research.md) for full decision log. Summary:
 | Istio version | Pinned via `ISTIO_VERSION` var at script top |
 | Idempotency | Pre-check each resource before creation; skip if exists |
 | Script structure | Separate `bootstrap.sh` + `install-istio.sh` + `teardown.sh` |
+| Observability add-ons | Prometheus → Grafana → Jaeger → Kiali, bundled into `install-istio.sh` by default |
+| Add-on source | Official Istio sample YAMLs fetched at pinned `ISTIO_VERSION` from GitHub |
+| Add-on skip | `SKIP_ADDONS=true` env var; idempotent existence check on each deployment |
 
 ---
 
@@ -101,8 +110,9 @@ See [data-model.md](data-model.md). Key entities:
 - **Kind Cluster** (`istio-qos`, single-node, containerd mirror configured)
 - **Local Registry** (`kind-registry`, port 5000, `registry:2` image)
 - **Istio Installation** (`demo` profile, `istio-system` namespace)
-- **`hack/` scripts** (bootstrap, install-istio, teardown)
-- **`README.md`** (prerequisites, sequence, verification, teardown)
+- **Observability Stack** (Prometheus, Grafana, Jaeger, Kiali — all in `istio-system`)
+- **`hack/` scripts** (bootstrap, install-istio w/ add-ons, teardown)
+- **`README.md`** (prerequisites, sequence, verification, dashboard commands, teardown)
 
 ### Script Contracts
 
@@ -129,3 +139,14 @@ adapted into `README.md`.
 - `README.md` MUST include the pinned Istio version number so readers know which version
   to install before running `hack/install-istio.sh`.
 - All scripts MUST be executable (`chmod +x`) and include a `#!/usr/bin/env bash` shebang.
+- `hack/install-istio.sh` MUST install observability add-ons in dependency order immediately
+  after the control plane is ready: Prometheus first (Kiali depends on it), then Grafana
+  and Jaeger in parallel, then Kiali last. The script MUST wait for `kiali` deployment
+  rollout before exiting so the environment is fully operational.
+- Add-on idempotency: check `kubectl get deployment <addon> -n istio-system` before each
+  `kubectl apply`. Skip silently if the deployment already exists.
+- `SKIP_ADDONS=true` guard: when set, skip the entire add-on loop without error or output
+  beyond a single info line (`[install-istio] Skipping observability add-ons (SKIP_ADDONS=true)`).
+- `README.md` MUST document the dashboard access commands and note that each command
+  opens a browser tab via port-forward (requires a running terminal for the duration of
+  the session).

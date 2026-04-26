@@ -90,3 +90,70 @@ between test runs.
 **Alternatives considered**:
 - Single `hack/setup.sh` calling both: Harder to run steps independently; conflicts with
   the spec's idempotency requirement when only one step needs re-running.
+
+---
+
+## Decision 6: Observability Add-ons Selection
+
+**Decision**: Install all four Istio official add-ons by default:
+**Prometheus** → **Grafana** → **Jaeger** → **Kiali** (dependency order).
+
+| Add-on     | Role | Why included |
+|------------|------|-------------|
+| Prometheus | Metrics collection | Required by Kiali; feeds Grafana dashboards |
+| Grafana    | Metrics dashboards | Pre-built Istio panels (request rate, error rate, latency by tier) |
+| Jaeger     | Distributed tracing | Trace individual requests across mesh hops |
+| Kiali      | Mesh topology graph | Live service graph with tier labels, traffic rates, error percentages |
+
+**Rationale**: The `mesh-priority-controller` exists to influence Istio routing via tier
+labels. Without a live mesh topology view (Kiali) and metrics dashboards (Grafana), a
+developer cannot verify that tier-based routing is working correctly. All four tools are
+officially maintained by the Istio project and tested against each Istio release — no
+third-party operators or Helm charts required.
+
+**Kiali specifically**: Kiali is the only tool that shows the full picture — which pods
+carry which tier label, how traffic is split across subsets, and whether the
+`DestinationRule`/`VirtualService` config is valid. It is the primary debugging surface
+for the controller.
+
+**Alternatives considered**:
+- Prometheus + Grafana only: Misses the topology view; Kiali is the most useful single
+  tool for validating tier routing.
+- Zipkin instead of Jaeger: Both work; Jaeger is the Istio default sample add-on.
+- External Kiali operator (kiali-operator Helm chart): Heavier; for production clusters.
+  Sample YAML is sufficient for local dev.
+
+---
+
+## Decision 7: Add-ons Installation Method and Bundling
+
+**Decision**: Add-on installation is **bundled inside `hack/install-istio.sh`** at the end
+of the Istio setup sequence. Add-ons are fetched directly from the official Istio GitHub
+repository at the **same pinned `ISTIO_VERSION`** as the control plane.
+
+```bash
+# Installation loop inside hack/install-istio.sh (after Istio control plane is ready)
+ADDONS_BASE="https://raw.githubusercontent.com/istio/istio/${ISTIO_VERSION}/samples/addons"
+for addon in prometheus grafana jaeger kiali; do
+  if ! kubectl get deployment "$addon" -n istio-system &>/dev/null; then
+    kubectl apply -f "${ADDONS_BASE}/${addon}.yaml"
+  fi
+done
+kubectl rollout status deployment/kiali -n istio-system --timeout=180s
+```
+
+A `SKIP_ADDONS=true` env-var guard allows skipping on resource-constrained machines.
+
+**Rationale**:
+- Bundling avoids a separate script step; most developers always want the observability
+  stack. The `SKIP_ADDONS` escape hatch handles the minority case.
+- Fetching from GitHub at the pinned version ensures the add-ons are tested against the
+  exact Istio version being installed (Kiali in particular has version coupling with Istio).
+- Using `kubectl apply` with an existence check (`kubectl get deployment`) achieves
+  idempotency without `--prune` risks.
+
+**Alternatives considered**:
+- Separate `hack/install-monitoring.sh`: Extra step developers must remember to run;
+  contradicts the "by default" requirement.
+- Bundling add-on YAMLs in the repo: Increases repo size; they are already versioned in
+  the Istio release.
