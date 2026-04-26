@@ -5,9 +5,9 @@ set -euo pipefail
 CLUSTER_NAME="${CLUSTER_NAME:-istio-qos}"
 ISTIO_VERSION="${ISTIO_VERSION:-1.24.2}"
 ISTIO_PROFILE="${ISTIO_PROFILE:-demo}"
-
-# Timeout (seconds) to wait for Istio pods to become ready
 READY_TIMEOUT="${READY_TIMEOUT:-300}"
+# Set SKIP_ADDONS=true to bypass Prometheus/Grafana/Jaeger/Kiali installation
+SKIP_ADDONS="${SKIP_ADDONS:-false}"
 
 log()  { echo "[install-istio] $*"; }
 err()  { echo "[install-istio] ERROR: $*" >&2; }
@@ -25,7 +25,7 @@ check_prerequisites() {
 
   if ! kubectl cluster-info --context "kind-${CLUSTER_NAME}" >/dev/null 2>&1; then
     err "Cannot reach cluster 'kind-${CLUSTER_NAME}'."
-    err "Run 'bash rec/bootstrap.sh' first, then retry."
+    err "Run 'bash hack/bootstrap.sh' first, then retry."
     ok=false
   fi
 
@@ -42,14 +42,14 @@ check_prerequisites() {
 }
 
 # ---------------------------------------------------------------------------
-# Idempotency check
+# Idempotency check — returns 0 if istio-system already exists
 # ---------------------------------------------------------------------------
 istio_already_installed() {
   kubectl get namespace istio-system --context "kind-${CLUSTER_NAME}" >/dev/null 2>&1
 }
 
 # ---------------------------------------------------------------------------
-# Install Istio
+# Install Istio control plane
 # ---------------------------------------------------------------------------
 install_istio() {
   log "Installing Istio ${ISTIO_VERSION} (profile: ${ISTIO_PROFILE}) ..."
@@ -63,7 +63,7 @@ install_istio() {
 }
 
 # ---------------------------------------------------------------------------
-# Wait for readiness
+# Wait for Istio control-plane pods to reach Ready
 # ---------------------------------------------------------------------------
 wait_for_ready() {
   log "Waiting for Istio pods to become ready (timeout: ${READY_TIMEOUT}s) ..."
@@ -87,27 +87,77 @@ wait_for_ready() {
 }
 
 # ---------------------------------------------------------------------------
+# Install observability add-ons: Prometheus → Grafana → Jaeger → Kiali
+# Each add-on is checked individually for idempotency.
+# ---------------------------------------------------------------------------
+install_addons() {
+  local base="https://raw.githubusercontent.com/istio/istio/${ISTIO_VERSION}/samples/addons"
+  local ctx="kind-${CLUSTER_NAME}"
+
+  log "Installing observability add-ons (Prometheus → Grafana → Jaeger → Kiali) ..."
+
+  for addon in prometheus grafana jaeger kiali; do
+    if kubectl get deployment "${addon}" \
+        -n istio-system --context "${ctx}" &>/dev/null; then
+      log "  ${addon}: already installed — skipping."
+    else
+      log "  Installing ${addon} ..."
+      kubectl apply -f "${base}/${addon}.yaml" --context "${ctx}"
+    fi
+  done
+
+  log "Waiting for Kiali to be ready (timeout: 180s) ..."
+  kubectl rollout status deployment/kiali \
+    -n istio-system \
+    --context "${ctx}" \
+    --timeout=180s
+}
+
+# ---------------------------------------------------------------------------
+# Print access summary
+# ---------------------------------------------------------------------------
+print_summary() {
+  log ""
+  log "Setup complete. Istio ${ISTIO_VERSION} is ready."
+  log ""
+  log "Verify control plane:"
+  log "  kubectl get pods -n istio-system"
+  log "  kubectl get crd | grep istio.io"
+
+  if [[ "${SKIP_ADDONS}" != "true" ]]; then
+    log ""
+    log "Access observability dashboards (each opens a browser tab via port-forward):"
+    log "  istioctl dashboard kiali      # Service graph + tier routing  (port 20001)"
+    log "  istioctl dashboard grafana    # Istio metrics dashboards       (port 3000)"
+    log "  istioctl dashboard jaeger     # Distributed tracing            (port 16686)"
+    log "  istioctl dashboard prometheus # Metrics query UI               (port 9090)"
+  fi
+
+  log ""
+  log "Enable sidecar injection in a namespace:"
+  log "  kubectl label namespace <ns> istio-injection=enabled"
+}
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 main() {
   check_prerequisites
 
   if istio_already_installed; then
-    log "Istio already installed in 'istio-system' — skipping."
-    exit 0
+    log "Istio already installed in 'istio-system' — skipping control plane install."
+  else
+    install_istio
+    wait_for_ready
   fi
 
-  install_istio
-  wait_for_ready
+  if [[ "${SKIP_ADDONS}" == "true" ]]; then
+    log "Skipping observability add-ons (SKIP_ADDONS=true)."
+  else
+    install_addons
+  fi
 
-  log "Done. Istio ${ISTIO_VERSION} is ready."
-  log ""
-  log "Verify with:"
-  log "  kubectl get pods -n istio-system"
-  log "  kubectl get crd | grep istio.io"
-  log ""
-  log "Enable sidecar injection in a namespace:"
-  log "  kubectl label namespace <ns> istio-injection=enabled"
+  print_summary
 }
 
 main "$@"

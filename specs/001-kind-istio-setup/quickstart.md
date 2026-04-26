@@ -77,9 +77,57 @@ kubectl get pods -n istio-system
 kubectl get crd | grep istio.io
 ```
 
+By default `hack/install-istio.sh` also installs the observability add-ons automatically
+(see Step 3 below). Pass `SKIP_ADDONS=true` to skip them.
+
 ---
 
-## Step 3: Test the Local Registry
+## Step 3: Verify the Observability Stack
+
+After `hack/install-istio.sh` completes, Prometheus, Grafana, Jaeger, and Kiali are all
+deployed in `istio-system`:
+
+```bash
+kubectl get deployments -n istio-system
+```
+
+Expected output includes:
+```
+NAME                   READY   UP-TO-DATE   AVAILABLE
+grafana                1/1     1            1
+istiod                 1/1     1            1
+jaeger                 1/1     1            1
+kiali                  1/1     1            1
+prometheus             1/1     1            1
+```
+
+### Access the Dashboards
+
+Each command opens the respective UI in your browser via `istioctl` port-forward.
+Keep the terminal open while using the dashboard.
+
+| Dashboard  | Command                           | URL                       |
+|------------|-----------------------------------|---------------------------|
+| Kiali      | `istioctl dashboard kiali`        | http://localhost:20001    |
+| Grafana    | `istioctl dashboard grafana`      | http://localhost:3000     |
+| Jaeger     | `istioctl dashboard jaeger`       | http://localhost:16686    |
+| Prometheus | `istioctl dashboard prometheus`   | http://localhost:9090     |
+
+**Kiali** is the primary tool for watching tier-label routing live. After deploying the
+`config/samples/` from feature 002, open the Kiali graph view and enable **traffic
+animation** to see requests flow between `high-priority-pods` and `standard-pods` subsets.
+
+### What to look for in Kiali
+
+1. Navigate to **Graph → Namespace: default**.
+2. Set the display to show **Request rate** and **Traffic animation**.
+3. Send traffic with and without the `user-type: premium` header — the highlighted paths
+   will switch between the high and standard subsets accordingly.
+4. The **`tier` label** appears on each workload node in the sidebar under **Labels**.
+
+---
+
+## Step 5: Test the Local Registry
 
 Build and push a test image, then confirm it is pullable inside the cluster:
 
@@ -118,8 +166,9 @@ This deletes the kind cluster and stops the registry container. All local state 
 |-----------------|-----------------|-----------------------------------------------------|
 | `CLUSTER_NAME`  | `istio-qos`     | `CLUSTER_NAME=my-cluster bash hack/bootstrap.sh`    |
 | `REGISTRY_PORT` | `5000`          | `REGISTRY_PORT=5001 bash hack/bootstrap.sh`         |
-| `ISTIO_VERSION` | (pinned in file)| `ISTIO_VERSION=1.25.0 bash hack/install-istio.sh`  |
-| `ISTIO_PROFILE` | `demo`          | `ISTIO_PROFILE=minimal bash hack/install-istio.sh` |
+| `ISTIO_VERSION` | (pinned in file)| `ISTIO_VERSION=1.25.0 bash hack/install-istio.sh`      |
+| `ISTIO_PROFILE` | `demo`          | `ISTIO_PROFILE=minimal bash hack/install-istio.sh`     |
+| `SKIP_ADDONS`   | (unset)         | `SKIP_ADDONS=true bash hack/install-istio.sh`          |
 
 ---
 
