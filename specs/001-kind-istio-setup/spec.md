@@ -14,7 +14,7 @@ those scripts to make the procedure easy."
 
 A developer contributing to `mesh-priority-controller` needs a reproducible local Kubernetes
 environment to test the controller end-to-end without relying on a shared cluster or cloud
-infrastructure. Running a single script from the `rec/` directory creates a `kind` cluster
+infrastructure. Running a single script from the `hack/` directory creates a `kind` cluster
 with a local container registry configured and reachable from inside the cluster.
 
 **Why this priority**: Without a local cluster and registry, developers cannot build, push,
@@ -26,13 +26,13 @@ registry succeeds from the host.
 
 **Acceptance Scenarios**:
 
-1. **Given** a developer has Docker and `kind` installed, **When** they run `rec/bootstrap.sh`,
+1. **Given** a developer has Docker and `kind` installed, **When** they run `hack/bootstrap.sh`,
    **Then** a `kind` cluster is created, a local container registry is started, and the
    registry is accessible from inside the cluster.
 2. **Given** the cluster is running, **When** the developer pushes an image to the local
    registry, **Then** the image is pullable from a pod running inside the cluster.
 3. **Given** the script is run a second time on an already-created cluster, **When** the
-   developer re-runs `rec/bootstrap.sh`, **Then** the script detects the existing cluster
+   developer re-runs `hack/bootstrap.sh`, **Then** the script detects the existing cluster
    and registry and exits cleanly without error.
 
 ---
@@ -41,7 +41,7 @@ registry succeeds from the host.
 
 After the kind cluster is running, a developer needs Istio installed and ready so that
 `DestinationRule` and `VirtualService` resources work correctly for testing tier-based
-traffic routing. A single script from the `rec/` directory installs Istio into the cluster
+traffic routing. A single script from the `hack/` directory installs Istio into the cluster
 in a configuration compatible with the controller's mesh requirements.
 
 **Why this priority**: Istio is the mesh layer that consumes the tier labels the controller
@@ -52,13 +52,13 @@ cluster is up and verifying that all Istio control plane components reach Runnin
 
 **Acceptance Scenarios**:
 
-1. **Given** a kind cluster created by `rec/bootstrap.sh` is running, **When** the developer
-   runs `rec/install-istio.sh`, **Then** the Istio control plane is installed and all
+1. **Given** a kind cluster created by `hack/bootstrap.sh` is running, **When** the developer
+   runs `hack/install-istio.sh`, **Then** the Istio control plane is installed and all
    components reach Ready state within a reasonable timeout.
 2. **Given** Istio is installed, **When** a namespace is labeled for sidecar injection,
    **Then** pods in that namespace receive an Envoy sidecar automatically.
 3. **Given** the install script is run against a cluster that already has Istio installed,
-   **When** the developer re-runs `rec/install-istio.sh`, **Then** the script detects the
+   **When** the developer re-runs `hack/install-istio.sh`, **Then** the script detects the
    existing installation and exits without re-installing or breaking existing state.
 
 ---
@@ -66,7 +66,7 @@ cluster is up and verifying that all Istio control plane components reach Runnin
 ### User Story 3 - Follow README Documentation for Full Setup (Priority: P3)
 
 A developer new to the project needs clear, step-by-step documentation in `README.md` that
-explains how to use the scripts in `rec/` to go from zero to a fully configured local
+explains how to use the scripts in `hack/` to go from zero to a fully configured local
 development environment (kind cluster + registry + Istio) without prior context about the
 project.
 
@@ -103,9 +103,9 @@ out-of-band assistance.
 
 ### Functional Requirements
 
-- **FR-001**: The project MUST include a `rec/bootstrap.sh` script that creates a `kind`
+- **FR-001**: The project MUST include a `hack/bootstrap.sh` script that creates a `kind`
   cluster and a local container registry configured to be reachable from within the cluster.
-- **FR-002**: The project MUST include a `rec/install-istio.sh` script that installs the
+- **FR-002**: The project MUST include a `hack/install-istio.sh` script that installs the
   full Istio service mesh (control plane + data plane sidecar injection) into an existing
   kind cluster. The installed mesh MUST support `DestinationRule`, `VirtualService`, and
   automatic sidecar injection, which are required for tier-based traffic routing.
@@ -132,7 +132,7 @@ out-of-band assistance.
 - **Istio Installation**: The Istio service mesh control plane deployed inside the kind
   cluster, providing the `DestinationRule` and `VirtualService` support needed for tier-based
   routing tests.
-- **`rec/` Directory**: The repository directory containing all setup and installation scripts
+- **`hack/` Directory**: The repository directory containing all setup and installation scripts
   for the local development environment.
 
 ## Success Criteria *(mandatory)*
@@ -153,7 +153,7 @@ out-of-band assistance.
 
 - "cursor" in the original description is a typo for "cluster".
 - "really.me" in the original description is a typo for "README.md".
-- "REC folder" refers to a `rec/` directory at the repository root containing shell scripts.
+- "REC folder" refers to a `hack/` directory at the repository root containing shell scripts.
 - Scripts target Linux and macOS with Bash; Windows support is out of scope for v1.
 - Docker is a hard prerequisite and must be running before any script is executed.
 - The Istio version installed by the script will be pinned (documented in the script and

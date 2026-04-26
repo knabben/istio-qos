@@ -30,7 +30,7 @@ containerdConfigPatches:
 
 ## Decision 2: Istio Version
 
-**Decision**: Pin `ISTIO_VERSION` as a variable at the top of `rec/install-istio.sh`,
+**Decision**: Pin `ISTIO_VERSION` as a variable at the top of `hack/install-istio.sh`,
 defaulting to the current stable release at time of writing. The version MUST be explicitly
 documented in both the script and `README.md` for reproducibility.
 
@@ -80,13 +80,13 @@ failures without needing to clean up first.
 
 ## Decision 5: Script Structure
 
-**Decision**: Two separate scripts — `rec/bootstrap.sh` (cluster + registry) and
-`rec/install-istio.sh` (Istio only) — plus a `rec/teardown.sh` for cleanup.
+**Decision**: Two separate scripts — `hack/bootstrap.sh` (cluster + registry) and
+`hack/install-istio.sh` (Istio only) — plus a `hack/teardown.sh` for cleanup.
 
 **Rationale**: Separation allows developers to run only the step they need, matching
 the two user stories in the spec. A teardown script is practical for resetting state
 between test runs.
 
 **Alternatives considered**:
-- Single `rec/setup.sh` calling both: Harder to run steps independently; conflicts with
+- Single `hack/setup.sh` calling both: Harder to run steps independently; conflicts with
   the spec's idempotency requirement when only one step needs re-running.

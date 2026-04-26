@@ -7,7 +7,7 @@
 
 Create a reproducible local development environment for `mesh-priority-controller` using
 a kind cluster wired to a local container registry (port 5000), with Istio installed via
-`istioctl` using the `demo` profile. Two idempotent shell scripts in `rec/` drive the
+`istioctl` using the `demo` profile. Two idempotent shell scripts in `hack/` drive the
 setup sequence; a `README.md` documents the full procedure for new contributors.
 
 ## Technical Context
@@ -60,7 +60,7 @@ specs/001-kind-istio-setup/
 ### Source Code (repository root)
 
 ```text
-rec/
+hack/
 ├── bootstrap.sh          # US1: Create kind cluster + local registry
 ├── install-istio.sh      # US2: Install Istio service mesh
 └── teardown.sh           # Cleanup: delete cluster + stop registry
@@ -68,7 +68,7 @@ rec/
 README.md                 # US3: Full setup documentation
 ```
 
-**Structure Decision**: Single project layout. Shell scripts are co-located under `rec/`
+**Structure Decision**: Single project layout. Shell scripts are co-located under `hack/`
 at the repo root. No `src/` tree needed — this feature is entirely tooling and documentation.
 
 ## Complexity Tracking
@@ -101,7 +101,7 @@ See [data-model.md](data-model.md). Key entities:
 - **Kind Cluster** (`istio-qos`, single-node, containerd mirror configured)
 - **Local Registry** (`kind-registry`, port 5000, `registry:2` image)
 - **Istio Installation** (`demo` profile, `istio-system` namespace)
-- **`rec/` scripts** (bootstrap, install-istio, teardown)
+- **`hack/` scripts** (bootstrap, install-istio, teardown)
 - **`README.md`** (prerequisites, sequence, verification, teardown)
 
 ### Script Contracts
@@ -121,11 +121,11 @@ adapted into `README.md`.
 
 ## Implementation Notes
 
-- `rec/bootstrap.sh` MUST create the registry before the cluster so the containerd patch
+- `hack/bootstrap.sh` MUST create the registry before the cluster so the containerd patch
   can reference an already-running registry container name.
 - The kind cluster config YAML is generated inline in `bootstrap.sh` using a here-doc.
-- `rec/install-istio.sh` MUST validate that `istioctl` is in `$PATH` and print a clear
+- `hack/install-istio.sh` MUST validate that `istioctl` is in `$PATH` and print a clear
   download instruction if absent (do not auto-download without user consent).
 - `README.md` MUST include the pinned Istio version number so readers know which version
-  to install before running `rec/install-istio.sh`.
+  to install before running `hack/install-istio.sh`.
 - All scripts MUST be executable (`chmod +x`) and include a `#!/usr/bin/env bash` shebang.

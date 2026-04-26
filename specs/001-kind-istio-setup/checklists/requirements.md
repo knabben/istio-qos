@@ -36,4 +36,4 @@ All items pass. Spec is ready for `/speckit-clarify` or `/speckit-plan`.
 Typos in original user input were resolved via documented assumptions:
 - "cursor" → "cluster"
 - "really.me" → "README.md"
-- "REC folder" → `rec/` directory
+- "REC folder" → `hack/` directory

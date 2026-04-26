@@ -31,7 +31,7 @@ istioctl version --remote=false
 ## Step 1: Bootstrap the Kind Cluster and Registry
 
 ```bash
-bash rec/bootstrap.sh
+bash hack/bootstrap.sh
 ```
 
 Expected output (excerpt):
@@ -57,7 +57,7 @@ curl -s http://localhost:5000/v2/_catalog
 ## Step 2: Install Istio
 
 ```bash
-bash rec/install-istio.sh
+bash hack/install-istio.sh
 ```
 
 Expected output (excerpt):
@@ -105,7 +105,7 @@ kubectl delete pod test-pull
 To remove the local environment when you are done:
 
 ```bash
-bash rec/teardown.sh
+bash hack/teardown.sh
 ```
 
 This deletes the kind cluster and stops the registry container. All local state is lost.
@@ -116,10 +116,10 @@ This deletes the kind cluster and stops the registry container. All local state 
 
 | Variable        | Default         | Override example                                    |
 |-----------------|-----------------|-----------------------------------------------------|
-| `CLUSTER_NAME`  | `istio-qos`     | `CLUSTER_NAME=my-cluster bash rec/bootstrap.sh`    |
-| `REGISTRY_PORT` | `5000`          | `REGISTRY_PORT=5001 bash rec/bootstrap.sh`         |
-| `ISTIO_VERSION` | (pinned in file)| `ISTIO_VERSION=1.25.0 bash rec/install-istio.sh`  |
-| `ISTIO_PROFILE` | `demo`          | `ISTIO_PROFILE=minimal bash rec/install-istio.sh` |
+| `CLUSTER_NAME`  | `istio-qos`     | `CLUSTER_NAME=my-cluster bash hack/bootstrap.sh`    |
+| `REGISTRY_PORT` | `5000`          | `REGISTRY_PORT=5001 bash hack/bootstrap.sh`         |
+| `ISTIO_VERSION` | (pinned in file)| `ISTIO_VERSION=1.25.0 bash hack/install-istio.sh`  |
+| `ISTIO_PROFILE` | `demo`          | `ISTIO_PROFILE=minimal bash hack/install-istio.sh` |
 
 ---
 
@@ -128,7 +128,7 @@ This deletes the kind cluster and stops the registry container. All local state 
 **Port 5000 already in use**:
 ```bash
 lsof -i :5000
-# Kill the process or use REGISTRY_PORT=5001 bash rec/bootstrap.sh
+# Kill the process or use REGISTRY_PORT=5001 bash hack/bootstrap.sh
 ```
 
 **Docker not running**:

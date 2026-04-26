@@ -9,7 +9,7 @@ contract that `README.md` and CI pipelines rely on.
 
 ---
 
-## rec/bootstrap.sh
+## hack/bootstrap.sh
 
 **Purpose**: Create a kind cluster with a local container registry connected to it.
 
@@ -51,12 +51,12 @@ None.
 
 ### Idempotency Guarantee
 
-Running `rec/bootstrap.sh` a second time on an already-configured environment
+Running `hack/bootstrap.sh` a second time on an already-configured environment
 exits with code `0` and makes no changes.
 
 ---
 
-## rec/install-istio.sh
+## hack/install-istio.sh
 
 **Purpose**: Install the Istio service mesh into an existing kind cluster.
 
@@ -98,12 +98,12 @@ None.
 
 ### Idempotency Guarantee
 
-Running `rec/install-istio.sh` a second time exits with code `0` and makes no changes
+Running `hack/install-istio.sh` a second time exits with code `0` and makes no changes
 if Istio is already installed.
 
 ---
 
-## rec/teardown.sh
+## hack/teardown.sh
 
 **Purpose**: Delete the kind cluster and stop the local registry container.
 
@@ -133,4 +133,4 @@ None.
 
 ### Idempotency Guarantee
 
-Running `rec/teardown.sh` when no cluster or registry exists exits with code `0`.
+Running `hack/teardown.sh` when no cluster or registry exists exits with code `0`.

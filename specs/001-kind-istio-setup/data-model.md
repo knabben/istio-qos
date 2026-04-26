@@ -18,8 +18,8 @@ The local Kubernetes cluster created and managed by the `kind` tool.
 | Registry mirror  | `localhost:5000` → `http://kind-registry:5000`          |
 
 **Lifecycle**:
-- Created by `rec/bootstrap.sh`
-- Destroyed by `rec/teardown.sh`
+- Created by `hack/bootstrap.sh`
+- Destroyed by `hack/teardown.sh`
 - Re-entrant: `bootstrap.sh` skips creation if cluster already exists
 
 ---
@@ -39,8 +39,8 @@ containerd runtime.
 | Network          | Connected to the `kind` Docker network for cluster access   |
 
 **Lifecycle**:
-- Started by `rec/bootstrap.sh`
-- Stopped/removed by `rec/teardown.sh`
+- Started by `hack/bootstrap.sh`
+- Stopped/removed by `hack/teardown.sh`
 - Re-entrant: `bootstrap.sh` skips creation if container already exists
 
 ---
@@ -60,21 +60,21 @@ cluster.
 | Ingress gateway       | Included (demo profile)                                   |
 
 **Lifecycle**:
-- Installed by `rec/install-istio.sh` into an existing kind cluster
-- Uninstalled as part of cluster teardown (`rec/teardown.sh` deletes the cluster)
+- Installed by `hack/install-istio.sh` into an existing kind cluster
+- Uninstalled as part of cluster teardown (`hack/teardown.sh` deletes the cluster)
 - Re-entrant: `install-istio.sh` skips installation if `istio-system` namespace exists
 
 ---
 
-### `rec/` Directory
+### `hack/` Directory
 
 The repository directory containing all setup scripts.
 
 | File                   | Purpose                                              |
 |------------------------|------------------------------------------------------|
-| `rec/bootstrap.sh`     | Create kind cluster + local registry (P1)            |
-| `rec/install-istio.sh` | Install Istio service mesh into the cluster (P2)     |
-| `rec/teardown.sh`      | Delete the kind cluster and stop the registry        |
+| `hack/bootstrap.sh`     | Create kind cluster + local registry (P1)            |
+| `hack/install-istio.sh` | Install Istio service mesh into the cluster (P2)     |
+| `hack/teardown.sh`      | Delete the kind cluster and stop the registry        |
 
 ---
 
@@ -105,14 +105,14 @@ The repository root documentation file.
 ```
 [Host: Docker running]
         │
-        ▼ rec/bootstrap.sh
+        ▼ hack/bootstrap.sh
 [kind cluster created + registry running]
         │
-        ▼ rec/install-istio.sh
+        ▼ hack/install-istio.sh
 [Istio mesh installed and ready]
         │
         ▼ (develop / test controller)
         │
-        ▼ rec/teardown.sh
+        ▼ hack/teardown.sh
 [kind cluster deleted + registry stopped]
 ```
