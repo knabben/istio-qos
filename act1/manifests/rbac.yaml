@@ -1,0 +1,49 @@
+# RBAC for the podlabeler controller.
+#
+# Note: Following the original scenario — the junior developer has cluster-admin.
+# These RBAC manifests are the minimum-viable permissions for the controller
+# itself, applied separately from the developer's user permissions.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: podlabeler-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: podlabeler-controller
+  namespace: podlabeler-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: podlabeler-controller
+rules:
+  # The controller needs to watch and update Pod labels cluster-wide.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  # The controller reads PodLabelerPolicy CRs to determine what labels to apply.
+  - apiGroups: ["labeling.knabben.dev"]
+    resources: ["podlabelerpolicies"]
+    verbs: ["get", "list", "watch"]
+  # NOTE: leases would be needed for leader election. They are deliberately
+  # omitted in this Act I baseline because leader election is disabled (BUG 3).
+  # The Act II rewrite re-enables leader election and adds:
+  #   - apiGroups: ["coordination.k8s.io"]
+  #     resources: ["leases"]
+  #     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: podlabeler-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: podlabeler-controller
+subjects:
+  - kind: ServiceAccount
+    name: podlabeler-controller
+    namespace: podlabeler-system

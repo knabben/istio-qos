@@ -1,0 +1,74 @@
+# Sample workloads: two deployments running app1 and app2.
+# The controller will label app1 pods as tier=high and app2 pods as tier=standard.
+# Istio's DestinationRule consumes those labels.
+#
+# In a real demo the images would be real services; here we use httpbin
+# images as stand-ins, retagged to match the pattern.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-service
+  labels:
+    istio-injection: enabled
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1
+  namespace: my-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-service
+      version: app1
+  template:
+    metadata:
+      labels:
+        app: my-service
+        version: app1
+    spec:
+      containers:
+        - name: server
+          image: app1:latest          # ← controller will match this
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  namespace: my-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-service
+      version: app2
+  template:
+    metadata:
+      labels:
+        app: my-service
+        version: app2
+    spec:
+      containers:
+        - name: server
+          image: app2:latest          # ← controller will match this
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  namespace: my-service
+spec:
+  selector:
+    app: my-service
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http

@@ -1,0 +1,52 @@
+# PodLabelerPolicy CRD — hand-written, applied with kubectl apply -f.
+# No kubebuilder generation involved.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: podlabelerpolicies.labeling.knabben.dev
+spec:
+  group: labeling.knabben.dev
+  names:
+    kind: PodLabelerPolicy
+    listKind: PodLabelerPolicyList
+    plural: podlabelerpolicies
+    singular: podlabelerpolicy
+    shortNames:
+      - plp
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [imagePattern, labels]
+              properties:
+                imagePattern:
+                  type: string
+                  description: |
+                    Pattern matched against the pod's primary container image.
+                    Forms supported:
+                      "app1:latest"  exact match
+                      "app1:*"       wildcard tag
+                      "app1"         prefix match
+                    Registry prefixes are stripped before matching.
+                  minLength: 1
+                labels:
+                  type: object
+                  description: Labels to apply to matching pods.
+                  additionalProperties:
+                    type: string
+                  minProperties: 1
+      additionalPrinterColumns:
+        - name: ImagePattern
+          type: string
+          jsonPath: .spec.imagePattern
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp

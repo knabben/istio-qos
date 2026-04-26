@@ -1,0 +1,32 @@
+# Istio VirtualService — routes traffic to subsets based on a header.
+#
+# Requests with header "user-type: premium" go to the high-priority-pods subset.
+# Everything else goes to the standard-pods subset.
+#
+# This is the routing rule that makes labels matter. When the podlabeler
+# controller writes the wrong label on a pod, premium customer requests
+# get routed to standard-tier pods (or vice versa) — silently, until the
+# SRE team gets paged.
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: my-service-routing
+  namespace: my-service
+spec:
+  hosts:
+    - my-service.my-service.svc.cluster.local
+  http:
+    # Premium customers are routed to the high-tier subset.
+    - match:
+        - headers:
+            user-type:
+              exact: premium
+      route:
+        - destination:
+            host: my-service.my-service.svc.cluster.local
+            subset: high-priority-pods
+    # Default route — everything else lands on standard pods.
+    - route:
+        - destination:
+            host: my-service.my-service.svc.cluster.local
+            subset: standard-pods

@@ -1,0 +1,75 @@
+name: Act I — Bug Baseline
+
+# Validates that the Act I controller baseline has exactly 3 failing tests
+# (Bug 1 lost update, Bug 2 stale cache, Bug 3 no Lease) and 1 passing test
+# (core labeling happy path). This proves all three bugs exist as documented.
+
+on:
+  push:
+    paths:
+      - "act1/**"
+      - ".github/workflows/act1-bug-baseline.yml"
+  pull_request:
+    paths:
+      - "act1/**"
+      - ".github/workflows/act1-bug-baseline.yml"
+
+jobs:
+  bug-baseline:
+    name: Verify 3 expected test failures
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+          cache-dependency-path: act1/go.sum
+
+      - name: Download envtest binaries
+        working-directory: act1
+        run: |
+          ASSETS=$(go run sigs.k8s.io/controller-runtime/tools/setup-envtest@latest use -p path)
+          echo "KUBEBUILDER_ASSETS=$ASSETS" >> "$GITHUB_ENV"
+
+      - name: Build
+        working-directory: act1
+        run: go build ./...
+
+      - name: Vet
+        working-directory: act1
+        run: go vet ./...
+
+      - name: Run bug-exposure tests (failures expected)
+        working-directory: act1
+        run: |
+          KUBEBUILDER_ASSETS="$KUBEBUILDER_ASSETS" \
+            go test ./controller/... -v -timeout 60s 2>&1 | tee test-output.txt || true
+
+      - name: Assert exactly 3 test failures
+        working-directory: act1
+        run: |
+          FAIL_COUNT=$(grep -c '^--- FAIL:' test-output.txt || true)
+          PASS_COUNT=$(grep -c '^--- PASS:' test-output.txt || true)
+          echo "PASS: $PASS_COUNT  FAIL: $FAIL_COUNT"
+          if [ "$FAIL_COUNT" -ne 3 ]; then
+            echo "ERROR: expected exactly 3 test failures (one per bug), got $FAIL_COUNT"
+            echo "This means either a bug was accidentally fixed or a new bug was introduced."
+            exit 1
+          fi
+          if [ "$PASS_COUNT" -ne 1 ]; then
+            echo "ERROR: expected exactly 1 test to pass (TestCoreLabeling), got $PASS_COUNT"
+            exit 1
+          fi
+          echo "VERIFIED: exactly 3 bugs confirmed, happy path passes"
+
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: act1-test-output
+          path: act1/test-output.txt

@@ -1,0 +1,24 @@
+# Two policies that exercise the image-pattern matcher.
+#
+# - Pods running app1 (any tag) get tier=high and customer=premium.
+# - Pods running app2 (any tag) get tier=standard.
+# - Anything else gets nothing — Istio will route it to the default subset.
+---
+apiVersion: labeling.knabben.dev/v1alpha1
+kind: PodLabelerPolicy
+metadata:
+  name: app1-high-tier
+spec:
+  imagePattern: "app1:*"
+  labels:
+    tier: high
+    customer: premium
+---
+apiVersion: labeling.knabben.dev/v1alpha1
+kind: PodLabelerPolicy
+metadata:
+  name: app2-standard-tier
+spec:
+  imagePattern: "app2:*"
+  labels:
+    tier: standard
