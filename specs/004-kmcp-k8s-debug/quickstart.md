@@ -62,8 +62,8 @@ kubectl get podlabelerpolicies   # policies listed
 ```bash
 cd act1
 KUBEBUILDER_ASSETS=/home/amimk/.local/share/kubebuilder-envtest/k8s/1.35.0-linux-amd64 \
-  go test ./controller/... -v -timeout 60s
-# Expected: 1 PASS (TestCoreLabeling), 3 FAIL (Bug 1, 2, 3)
+  go test ./controller/... -v -timeout 60s || true
+# Expected: 1 PASS (TestCoreLabeling), 3 FAIL (TestBug1_LostUpdate, TestBug2_StaleCache, TestBug3_NoLease)
 ```
 
 ---
@@ -76,13 +76,13 @@ Run the skill in Claude Code:
 ```
 
 The skill will:
-1. Show the failing test output (`TestBug1_LostUpdate`)
+1. Show the failing test output (`TestBug1_LostUpdate` in act1)
 2. Call `list_pods` → pod has only one of two expected labels
 3. Call `list_events` → 409 Conflict events from the controller
-4. Point to `act1/controller/reconciler.go:121` — `r.Update(ctx, pod)`
-5. Apply the SSA patch to `act2/controller/reconciler.go`
-6. Run `make docker-build kind-load deploy` in `act2/`
-7. Run `go test ./controller/... -run TestBug1_LostUpdate` in `act2/` → PASS
+4. Point to `act1/controller/reconciler.go` ~line 83 — `r.Update(ctx, pod)`
+5. Apply the SSA patch (already in `act2/controller/reconciler.go`)
+6. Run `make docker-build kind-load` in `act2/`, then rollout restart
+7. Run `go test ./controller/... -run TestBug1_Fixed` in `act2/` → PASS
 
 ---
 
@@ -93,12 +93,12 @@ The skill will:
 ```
 
 The skill will:
-1. Show the failing test output (`TestBug2_StaleCache`)
+1. Show the failing test output (`TestBug2_StaleCache` in act1)
 2. Call `list_pod_logs` → `pods "X" not found` error lines in controller log
-3. Point to `act1/controller/reconciler.go:61` — `return ctrl.Result{}, err`
-4. Apply the `IsNotFound` guard to `act2/controller/reconciler.go`
-5. Rebuild and redeploy
-6. Run `go test ./controller/... -run TestBug2_StaleCache` in `act2/` → PASS
+3. Point to `act1/controller/reconciler.go` ~lines 38-41 — bare `return ctrl.Result{}, err`
+4. The `IsNotFound` guard is already in `act2/controller/reconciler.go` lines 44-46
+5. Rebuild and redeploy act2
+6. Run `go test ./controller/... -run TestBug2_Fixed` in `act2/` → PASS
 
 ---
 
@@ -109,12 +109,12 @@ The skill will:
 ```
 
 The skill will:
-1. Show the failing test output (`TestBug3_NoLease`)
-2. Call `list_leases` → empty list in `default` and `kube-system`
-3. Point to `act1/main.go:69` — `LeaderElection: false`
-4. Apply `LeaderElection: true` to `act2/main.go`
-5. Rebuild and redeploy
-6. Run `go test ./controller/... -run TestBug3_NoLease` in `act2/` → PASS
+1. Show the failing test output (`TestBug3_NoLease` in act1)
+2. Call `list_leases` → empty list in `kube-system` (no podlabeler Lease)
+3. Point to `act1/main.go` ~line 51 — `ctrl.NewManager()` with no LeaderElection field
+4. `LeaderElection: true` is already set in `act2/main.go` lines 61-64
+5. Rebuild and redeploy act2; verify `list_leases namespace=kube-system` returns the Lease
+6. Run `go test ./controller/... -run TestBug3_Fixed` in `act2/` → PASS
 
 ---
 
@@ -125,6 +125,10 @@ cd act2
 KUBEBUILDER_ASSETS=/home/amimk/.local/share/kubebuilder-envtest/k8s/1.35.0-linux-amd64 \
   go test ./controller/... -v -timeout 60s
 # Expected: 4 PASS, 0 FAIL
+# --- PASS: TestCoreLabeling
+# --- PASS: TestBug1_Fixed
+# --- PASS: TestBug2_Fixed
+# --- PASS: TestBug3_Fixed
 ```
 
 ---

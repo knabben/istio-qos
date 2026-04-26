@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: podlabeler-debug-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: podlabeler-debug-reader
+subjects:
+# Bind to the kind-istio-qos cluster admin user used by the local kubeconfig.
+# Replace with your username if using a different cluster context.
+- kind: User
+  name: "kubernetes-admin"
+  apiGroup: rbac.authorization.k8s.io
