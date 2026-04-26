@@ -1,0 +1,19 @@
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# Editor
+.vscode/
+.idea/
+
+# Istio download
+istio-*/
+
+# Kubernetes / local dev
+kubeconfig*
+*.key
+*.crt
+*.secret.yaml
+secrets/
