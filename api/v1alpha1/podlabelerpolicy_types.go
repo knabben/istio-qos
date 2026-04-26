@@ -38,15 +38,15 @@ type PodLabelerPolicySpec struct {
 
 // PodLabelerPolicyStatus defines the observed state of PodLabelerPolicy.
 type PodLabelerPolicyStatus struct {
-	// matchedPods is the number of pods currently labeled by this policy.
-	// +optional
-	MatchedPods int32 `json:"matchedPods,omitempty"`
-
 	// conditions represent the current state of the PodLabelerPolicy resource.
 	// +listType=map
 	// +listMapKey=type
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// matchedPods is the number of pods currently labeled by this policy.
+	// +optional
+	MatchedPods int32 `json:"matchedPods,omitempty"`
 }
 
 // +kubebuilder:object:root=true
