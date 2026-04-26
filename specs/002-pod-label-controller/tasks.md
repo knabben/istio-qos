@@ -148,7 +148,7 @@
 
 - [ ] T031 [P] Create `config/manager/manager.yaml` Deployment: namespace `mesh-priority-system`, `replicas: 2`, `securityContext.runAsNonRoot: true`, `securityContext.readOnlyRootFilesystem: true`, `resources.requests: {cpu: 50m, memory: 64Mi}`, `resources.limits: {cpu: 200m, memory: 128Mi}`
 - [ ] T032 [P] Update `config/rbac/role.yaml` ClusterRole with exact verbs per contracts/reconciler.md: `pods: get,list,watch,patch`; `podlabelerpolicies: get,list,watch`; `podlabelerpolicies/status: update,patch`; `events: create,patch`; `leases: get,list,watch,create,update,patch,delete`
-- [ ] T033 [P] Update `Dockerfile` for multi-stage build: builder stage `golang:1.22`, runtime stage `gcr.io/distroless/static:nonroot`, `USER 65532:65532`
+- [ ] T033 [P] Update `Dockerfile` for multi-stage build: builder stage `golang:latest`, runtime stage `gcr.io/distroless/static:nonroot`, `USER 65532:65532`
 - [ ] T034 Verify `hack/test-policy.sh` matches the CRD API group `mesh.knabben.github.com/v1alpha1` and runs cleanly against kind cluster (bash syntax check: `bash -n hack/test-policy.sh`)
 - [ ] T035 Run `make test` (`go test -race ./...` with `KUBEBUILDER_ASSETS` set) and confirm reconciler package coverage ≥ 80%; fix any coverage gaps
 - [ ] T036 [P] Run `golangci-lint run ./...` and resolve any lint violations in `internal/` and `cmd/`

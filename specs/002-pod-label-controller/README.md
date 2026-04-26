@@ -22,7 +22,7 @@ selection, routing premium traffic to high-tier pods.
 
 | Tool | Minimum version | Install |
 |------|----------------|---------|
-| Go | 1.22 | `go install` or [go.dev](https://go.dev/dl) |
+| Go | latest | `go install` or [go.dev](https://go.dev/dl) |
 | kubebuilder | v4 | `go install sigs.k8s.io/kubebuilder/v4/cmd/kubebuilder@latest` |
 | kind | any | `go install sigs.k8s.io/kind@latest` |
 | kubectl | 1.28+ | package manager or [kubernetes.io](https://kubernetes.io/docs/tasks/tools/) |

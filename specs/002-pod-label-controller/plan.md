@@ -13,7 +13,7 @@ field manager. Leader election is mandatory and non-configurable.
 
 ## Technical Context
 
-**Language/Version**: Go 1.22+
+**Language/Version**: Go (latest stable)
 **Primary Dependencies**: kubebuilder v4, controller-runtime v0.19+, client-go, `github.com/gobwas/glob` for image pattern matching
 **Storage**: Kubernetes API server (via informer cache for reads, server-side apply for writes)
 **Testing**: `go test ./...` with `-race`; `sigs.k8s.io/controller-runtime/pkg/envtest`; Ginkgo v2 suite

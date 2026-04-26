@@ -5,7 +5,7 @@
 
 ## Decision 1: Kubebuilder Version & Scaffolding
 
-**Decision**: Kubebuilder v4 (current stable: v4.x, Go 1.22+). Scaffold a cluster-scoped
+**Decision**: Kubebuilder v4 (current stable: v4.x, Go latest stable). Scaffold a cluster-scoped
 `PodLabelerPolicy` CRD in group `mesh`, version `v1alpha1`:
 
 ```bash

@@ -8,7 +8,7 @@
 - Kind cluster running with Istio installed (see `hack/bootstrap.sh` and `hack/install-istio.sh`)
 - `kubectl` configured for context `kind-istio-qos`
 - `kubebuilder` v4 installed
-- `go` 1.22+
+- `go` latest stable
 
 ---
 
