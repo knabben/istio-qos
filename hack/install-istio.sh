@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Default configuration — override via environment variables
 CLUSTER_NAME="${CLUSTER_NAME:-istio-qos}"
-ISTIO_VERSION="${ISTIO_VERSION:-1.24.2}"
+ISTIO_VERSION="${ISTIO_VERSION:-1.29.0}"
 ISTIO_PROFILE="${ISTIO_PROFILE:-demo}"
 READY_TIMEOUT="${READY_TIMEOUT:-300}"
 # Set SKIP_ADDONS=true to bypass Prometheus/Grafana/Jaeger/Kiali installation

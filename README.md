@@ -19,7 +19,7 @@ Install the following tools before running any script:
 | Docker | Run kind nodes and the local registry | https://docs.docker.com/get-docker/ |
 | `kind` | Create local Kubernetes clusters | https://kind.sigs.k8s.io/docs/user/quick-start/#installation |
 | `kubectl` | Interact with the cluster | https://kubernetes.io/docs/tasks/tools/ |
-| `istioctl` v1.24.2 | Install the Istio service mesh | https://istio.io/latest/docs/setup/install/istioctl/ |
+| `istioctl` v1.29.0 | Install the Istio service mesh | https://istio.io/latest/docs/setup/install/istioctl/ |
 
 Verify all tools are available:
 
@@ -73,7 +73,7 @@ bash hack/install-istio.sh
 Expected output:
 
 ```
-[install-istio] Installing Istio 1.24.2 (profile: demo) ...
+[install-istio] Installing Istio 1.29.0 (profile: demo) ...
 [install-istio] Waiting for Istio pods to become ready (timeout: 300s) ...
 [install-istio] Installing observability add-ons (Prometheus → Grafana → Jaeger → Kiali) ...
 [install-istio]   Installing prometheus ...
@@ -81,7 +81,7 @@ Expected output:
 [install-istio]   Installing jaeger ...
 [install-istio]   Installing kiali ...
 [install-istio] Waiting for Kiali to be ready (timeout: 180s) ...
-[install-istio] Setup complete. Istio 1.24.2 is ready.
+[install-istio] Setup complete. Istio 1.29.0 is ready.
 ```
 
 **Verify:**
@@ -157,7 +157,7 @@ second time on an already-configured environment exits 0 and makes no changes.
 | `CLUSTER_NAME` | `istio-qos` | Kind cluster name |
 | `REGISTRY_PORT` | `5000` | Host port for the local registry |
 | `REGISTRY_NAME` | `kind-registry` | Docker container name for the registry |
-| `ISTIO_VERSION` | `1.24.2` | Istio version to install |
+| `ISTIO_VERSION` | `1.29.0` | Istio version to install |
 | `ISTIO_PROFILE` | `demo` | istioctl install profile |
 | `READY_TIMEOUT` | `300` | Seconds to wait for Istio pods to become ready |
 | `SKIP_ADDONS` | (unset) | Set to `true` to skip Prometheus/Grafana/Jaeger/Kiali install |
@@ -210,8 +210,8 @@ kubectl describe pod -n istio-system <pod-name>
 **`istioctl` not found:**
 
 ```bash
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.24.2 sh -
-export PATH="$PWD/istio-1.24.2/bin:$PATH"
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.29.0 sh -
+export PATH="$PWD/istio-1.29.0/bin:$PATH"
 ```
 
 **Kiali add-on fails to install (network timeout):**

@@ -65,7 +65,7 @@ exits with code `0` and makes no changes.
 | Variable         | Default          | Description                                       |
 |------------------|------------------|---------------------------------------------------|
 | `CLUSTER_NAME`   | `istio-qos`      | Name of the kind cluster to install Istio into    |
-| `ISTIO_VERSION`  | (pinned in file) | Istio version to install (e.g. `1.24.2`)          |
+| `ISTIO_VERSION`  | (pinned in file) | Istio version to install (e.g. `1.29.0`)          |
 | `ISTIO_PROFILE`  | `demo`           | istioctl install profile                          |
 
 ### Positional Arguments
