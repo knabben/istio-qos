@@ -45,7 +45,7 @@ import (
 // the same resourceVersion; whichever PUT arrives second gets a 409 Conflict and
 // silently drops its labels.
 //
-// This implementation uses server-side apply (r.Patch with client.Apply).  The
+// This implementation uses server-side apply (k8sClient.Apply).  The
 // API server merges label fields at field-ownership level, so two writers using
 // different field owners never conflict — both labels survive.
 //
@@ -83,11 +83,11 @@ func TestBug1_LostUpdate(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_ = k8sClient.Patch(ctx, patch1, client.Apply, client.ForceOwnership, client.FieldOwner("policy-a"))
+		_ = k8sClient.Apply(ctx, patch1, client.ForceOwnership, client.FieldOwner("policy-a"))
 	}()
 	go func() {
 		defer wg.Done()
-		_ = k8sClient.Patch(ctx, patch2, client.Apply, client.ForceOwnership, client.FieldOwner("policy-b"))
+		_ = k8sClient.Apply(ctx, patch2, client.ForceOwnership, client.FieldOwner("policy-b"))
 	}()
 	wg.Wait()
 
