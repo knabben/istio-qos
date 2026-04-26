@@ -19,10 +19,10 @@
 
 **Purpose**: Bootstrap the kubebuilder project structure and add missing dependencies.
 
-- [ ] T001 Run `kubebuilder init --domain knabben.github.com --repo github.com/knabben/istio-qos` in repo root (generates go.mod, cmd/main.go, Makefile, Dockerfile, PROJECT)
-- [ ] T002 Run `kubebuilder create api --group mesh --version v1alpha1 --kind PodLabelerPolicy --namespaced=false --resource --controller` (generates api/v1alpha1/ types + internal/controller/ stub)
-- [ ] T003 [P] Add `github.com/gobwas/glob` to go.mod via `go get github.com/gobwas/glob` and run `go mod tidy`
-- [ ] T004 [P] Configure `.golangci.yml` at repo root with `govet`, `errcheck`, `staticcheck`, `unused`, `misspell` linters enabled
+- [x] T001 Run `kubebuilder init --domain knabben.github.com --repo github.com/knabben/istio-qos` in repo root (generates go.mod, cmd/main.go, Makefile, Dockerfile, PROJECT)
+- [x] T002 Run `kubebuilder create api --group mesh --version v1alpha1 --kind PodLabelerPolicy --namespaced=false --resource --controller` (generates api/v1alpha1/ types + internal/controller/ stub)
+- [x] T003 [P] Add `github.com/gobwas/glob` to go.mod via `go get github.com/gobwas/glob` and run `go mod tidy`
+- [x] T004 [P] Configure `.golangci.yml` at repo root with `govet`, `errcheck`, `staticcheck`, `unused`, `misspell` linters enabled
 
 ---
 
@@ -32,12 +32,12 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T005 Define PodLabelerPolicy spec (`imagePattern string`, `tier string`) and status (`matchedPods int32`, `conditions []metav1.Condition`) with kubebuilder markers (`+kubebuilder:validation:Enum=high;standard`, `+kubebuilder:resource:scope=Cluster`) in `api/v1alpha1/podlabelerpolicy_types.go`
-- [ ] T006 Run `make generate manifests` to produce CRD YAML (`config/crd/bases/`), deepcopy code, and RBAC role stubs
-- [ ] T007 [P] Implement `internal/matcher/matcher.go`: `Compile(pattern string) (Matcher, error)` wrapping `gobwas/glob`, and `MatchesAnyImage(images []string) bool`; no Kubernetes imports
-- [ ] T008 [P] Write unit tests in `internal/matcher/matcher_test.go` covering: exact match, wildcard `*`, registry prefix `*/image:*`, no-match, empty pattern error; table-driven with `testing.T`
-- [ ] T009 Bootstrap Ginkgo v2 + envtest suite in `internal/controller/suite_test.go`: `envtest.Environment{CRDDirectoryPaths: ["../../config/crd/bases"]}`, scheme registration for `corev1` and `meshv1alpha1`, `BeforeSuite`/`AfterSuite` hooks
-- [ ] T010 Register four Prometheus counters at package init in `internal/controller/metrics.go`: `mesh_priority_labels_applied_total{tier,namespace}`, `mesh_priority_labels_skipped_total{namespace}`, `mesh_priority_reconcile_errors_total{error_category}`, `mesh_priority_policy_evaluations_total{result}`; use `prometheus.MustRegister`
+- [x] T005 Define PodLabelerPolicy spec (`imagePattern string`, `tier string`) and status (`matchedPods int32`, `conditions []metav1.Condition`) with kubebuilder markers (`+kubebuilder:validation:Enum=high;standard`, `+kubebuilder:resource:scope=Cluster`) in `api/v1alpha1/podlabelerpolicy_types.go`
+- [x] T006 Run `make generate manifests` to produce CRD YAML (`config/crd/bases/`), deepcopy code, and RBAC role stubs
+- [x] T007 [P] Implement `internal/matcher/matcher.go`: `Compile(pattern string) (Matcher, error)` wrapping `gobwas/glob`, and `MatchesAnyImage(images []string) bool`; no Kubernetes imports
+- [x] T008 [P] Write unit tests in `internal/matcher/matcher_test.go` covering: exact match, wildcard `*`, registry prefix `*/image:*`, no-match, empty pattern error; table-driven with `testing.T`
+- [x] T009 Bootstrap Ginkgo v2 + envtest suite in `internal/controller/suite_test.go`: `envtest.Environment{CRDDirectoryPaths: ["../../config/crd/bases"]}`, scheme registration for `corev1` and `meshv1alpha1`, `BeforeSuite`/`AfterSuite` hooks
+- [x] T010 Register four Prometheus counters at package init in `internal/controller/metrics.go`: `mesh_priority_labels_applied_total{tier,namespace}`, `mesh_priority_labels_skipped_total{namespace}`, `mesh_priority_reconcile_errors_total{error_category}`, `mesh_priority_policy_evaluations_total{result}`; use `prometheus.MustRegister`
 
 **Checkpoint**: Foundational ready — `make generate` passes, `go build ./...` passes, matcher unit tests pass.
 
@@ -51,12 +51,12 @@
 
 ### Tests for User Story 1
 
-- [ ] T011 [P] [US1] Write envtest integration test `TestReconcile_LabelApplied` in `internal/controller/podlabelerpolicy_controller_test.go`: create PodLabelerPolicy + Pod, trigger reconcile, assert `pod.Labels["tier"] == policy.Spec.Tier`
-- [ ] T012 [P] [US1] Write envtest integration test `TestReconcile_LabelRemoved` in `internal/controller/podlabelerpolicy_controller_test.go`: delete policy, trigger reconcile, assert `tier` label absent from pod
+- [x] T011 [P] [US1] Write envtest integration test `TestReconcile_LabelApplied` in `internal/controller/podlabelerpolicy_controller_test.go`: create PodLabelerPolicy + Pod, trigger reconcile, assert `pod.Labels["tier"] == policy.Spec.Tier`
+- [x] T012 [P] [US1] Write envtest integration test `TestReconcile_LabelRemoved` in `internal/controller/podlabelerpolicy_controller_test.go`: delete policy, trigger reconcile, assert `tier` label absent from pod
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement `Reconcile(ctx, req)` in `internal/controller/podlabelerpolicy_controller.go`:
+- [x] T013 [US1] Implement `Reconcile(ctx, req)` in `internal/controller/podlabelerpolicy_controller.go`:
   1. Fetch pod from cache; if `apierrors.IsNotFound` → `return ctrl.Result{}, nil`
   2. List all `PodLabelerPolicy` from cache
   3. For each policy, use `matcher.Compile(policy.Spec.ImagePattern)` and match each container image
@@ -65,12 +65,12 @@
   6. Construct minimal SSA patch: `&corev1.Pod{TypeMeta: ..., ObjectMeta: {Name, Namespace, Labels: {"tier": tier}}}` (or omit `tier` for removal)
   7. Call `r.Patch(ctx, patch, client.Apply, client.FieldOwner("mesh-priority-controller"), client.ForceOwnership)`
   8. Increment `mesh_priority_labels_applied_total`; return `ctrl.Result{}, err`
-- [ ] T014 [US1] Register cross-type watches in `SetupWithManager()` in `internal/controller/podlabelerpolicy_controller.go`:
+- [x] T014 [US1] Register cross-type watches in `SetupWithManager()` in `internal/controller/podlabelerpolicy_controller.go`:
   - Primary: `For(&corev1.Pod{})` (enqueue pod's NamespacedName on pod events)
   - Secondary: `Watches(&meshv1alpha1.PodLabelerPolicy{}, handler.EnqueueRequestsFromMapFunc(mapPolicyToPods))` where `mapPolicyToPods` lists all pods cluster-wide and enqueues each
-- [ ] T015 [US1] Emit Kubernetes Events in `internal/controller/podlabelerpolicy_controller.go`: `r.Recorder.Event(pod, corev1.EventTypeNormal, "TierLabelApplied", msg)`, `"TierLabelRemoved"`, and `corev1.EventTypeWarning, "TierConflict"` with message including policy name, old tier, new tier
-- [ ] T016 [US1] Add structured `Info`-level log entries in `internal/controller/podlabelerpolicy_controller.go` for every label mutation: fields `pod`, `namespace`, `old_tier` (or `<none>`), `new_tier`, `policy`
-- [ ] T017 [US1] Increment `mesh_priority_policy_evaluations_total` per policy evaluation and `mesh_priority_reconcile_errors_total{error_category}` on any error return in `internal/controller/podlabelerpolicy_controller.go`
+- [x] T015 [US1] Emit Kubernetes Events in `internal/controller/podlabelerpolicy_controller.go`: `r.Recorder.Event(pod, corev1.EventTypeNormal, "TierLabelApplied", msg)`, `"TierLabelRemoved"`, and `corev1.EventTypeWarning, "TierConflict"` with message including policy name, old tier, new tier
+- [x] T016 [US1] Add structured `Info`-level log entries in `internal/controller/podlabelerpolicy_controller.go` for every label mutation: fields `pod`, `namespace`, `old_tier` (or `<none>`), `new_tier`, `policy`
+- [x] T017 [US1] Increment `mesh_priority_policy_evaluations_total` per policy evaluation and `mesh_priority_reconcile_errors_total{error_category}` on any error return in `internal/controller/podlabelerpolicy_controller.go`
 
 **Checkpoint**: `make test` passes; a pod running an nginx image receives `tier=standard` when a matching policy exists, and the label is removed when the policy is deleted.
 
@@ -84,13 +84,13 @@
 
 ### Tests for User Story 2
 
-- [ ] T018 [US2] Write `TestReconcile_NoLostUpdates` in `internal/controller/podlabelerpolicy_controller_test.go`: using envtest, inject a concurrent annotation on the pod after cache read (via direct client write); run reconcile; assert annotation is still present AND `tier` label is set; assert NO `client.Update` was called on Pod (use a fake recorder or wrap client)
-- [ ] T019 [US2] Write `TestReconcile_CacheNotFound` in `internal/controller/podlabelerpolicy_controller_test.go`: request reconcile for a non-existent pod name; assert `ctrl.Result{} == result` and `err == nil`; assert no panic and no log at Error level
+- [x] T018 [US2] Write `TestReconcile_NoLostUpdates` in `internal/controller/podlabelerpolicy_controller_test.go`: using envtest, inject a concurrent annotation on the pod after cache read (via direct client write); run reconcile; assert annotation is still present AND `tier` label is set; assert NO `client.Update` was called on Pod (use a fake recorder or wrap client)
+- [x] T019 [US2] Write `TestReconcile_CacheNotFound` in `internal/controller/podlabelerpolicy_controller_test.go`: request reconcile for a non-existent pod name; assert `ctrl.Result{} == result` and `err == nil`; assert no panic and no log at Error level
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Verify and harden `apierrors.IsNotFound` branch in `internal/controller/podlabelerpolicy_controller.go`: log at Debug level (`logger.V(1).Info("pod not found, skipping")`), return `ctrl.Result{}, nil` — no error propagation, no requeue timer
-- [ ] T021 [US2] Add Makefile target `vet-no-forbidden` using `grep -rn "\.Update(ctx, \&.*Pod\|MergeFrom" internal/controller/` to enforce no forbidden write patterns at CI time in `Makefile`
+- [x] T020 [US2] Verify and harden `apierrors.IsNotFound` branch in `internal/controller/podlabelerpolicy_controller.go`: log at Debug level (`logger.V(1).Info("pod not found, skipping")`), return `ctrl.Result{}, nil` — no error propagation, no requeue timer
+- [x] T021 [US2] Add Makefile target `vet-no-forbidden` using `grep -rn "\.Update(ctx, \&.*Pod\|MergeFrom" internal/controller/` to enforce no forbidden write patterns at CI time in `Makefile`
 
 **Checkpoint**: `TestReconcile_NoLostUpdates` and `TestReconcile_CacheNotFound` both pass with `-race`.
 
@@ -104,12 +104,12 @@
 
 ### Tests for User Story 3
 
-- [ ] T022 [US3] Write `TestReconcile_LeaderElection` in `internal/controller/podlabelerpolicy_controller_test.go`: call a `validateManagerOptions(opts ctrl.Options) error` function with `opts.LeaderElection = false`; assert non-nil error returned; assert error message contains "leader election"
+- [x] T022 [US3] Write `TestReconcile_LeaderElection` in `internal/controller/podlabelerpolicy_controller_test.go`: call a `validateManagerOptions(opts ctrl.Options) error` function with `opts.LeaderElection = false`; assert non-nil error returned; assert error message contains "leader election"
 
 ### Implementation for User Story 3
 
-- [ ] T023 [US3] Add `validateManagerOptions(opts ctrl.Options) error` function in `cmd/main.go` returning an error if `!opts.LeaderElection`; call it before `mgr.Start(ctx)` and `log.Error` + `os.Exit(1)` on failure
-- [ ] T024 [US3] Configure `ctrl.Options` in `cmd/main.go` with hardcoded values:
+- [x] T023 [US3] Add `validateManagerOptions(opts ctrl.Options) error` function in `cmd/main.go` returning an error if `!opts.LeaderElection`; call it before `mgr.Start(ctx)` and `log.Error` + `os.Exit(1)` on failure
+- [x] T024 [US3] Configure `ctrl.Options` in `cmd/main.go` with hardcoded values:
   ```
   LeaderElection:              true,
   LeaderElectionID:            "mesh-priority-controller.knabben.github.com",
@@ -131,12 +131,12 @@
 
 ### Implementation for User Story 4
 
-- [ ] T025 [P] [US4] Create `config/samples/mesh_v1alpha1_podlabelerpolicy_high.yaml`: `imagePattern: "*/tier-app-high:*"`, `tier: high`, name `policy-high`
-- [ ] T026 [P] [US4] Create `config/samples/mesh_v1alpha1_podlabelerpolicy_standard.yaml`: `imagePattern: "*/tier-app-standard:*"`, `tier: standard`, name `policy-standard`
-- [ ] T027 [P] [US4] Create `config/samples/deployment.yaml`: Deployment with 4 replicas — initContainers or separate containers selecting two image tags (`localhost:5000/tier-app-high:latest` for 2 pods, `localhost:5000/tier-app-standard:latest` for 2 pods); label `app: tier-app`
-- [ ] T028 [P] [US4] Create `config/samples/service.yaml`: ClusterIP Service `tier-app-svc` selecting `app: tier-app`, port 80
-- [ ] T029 [US4] Create `config/samples/destinationrule.yaml`: `networking.istio.io/v1beta1` DestinationRule for host `tier-app-svc` with subsets `high-priority-pods` (labels: `tier: high`) and `standard-pods` (labels: `tier: standard`)
-- [ ] T030 [US4] Create `config/samples/virtualservice.yaml`: VirtualService for `tier-app-svc` — match `headers.user-type.exact: premium` → route to `high-priority-pods` subset; default route → `standard-pods` subset
+- [x] T025 [P] [US4] Create `config/samples/mesh_v1alpha1_podlabelerpolicy_high.yaml`: `imagePattern: "*/tier-app-high:*"`, `tier: high`, name `policy-high`
+- [x] T026 [P] [US4] Create `config/samples/mesh_v1alpha1_podlabelerpolicy_standard.yaml`: `imagePattern: "*/tier-app-standard:*"`, `tier: standard`, name `policy-standard`
+- [x] T027 [P] [US4] Create `config/samples/deployment.yaml`: Deployment with 4 replicas — initContainers or separate containers selecting two image tags (`localhost:5000/tier-app-high:latest` for 2 pods, `localhost:5000/tier-app-standard:latest` for 2 pods); label `app: tier-app`
+- [x] T028 [P] [US4] Create `config/samples/service.yaml`: ClusterIP Service `tier-app-svc` selecting `app: tier-app`, port 80
+- [x] T029 [US4] Create `config/samples/destinationrule.yaml`: `networking.istio.io/v1beta1` DestinationRule for host `tier-app-svc` with subsets `high-priority-pods` (labels: `tier: high`) and `standard-pods` (labels: `tier: standard`)
+- [x] T030 [US4] Create `config/samples/virtualservice.yaml`: VirtualService for `tier-app-svc` — match `headers.user-type.exact: premium` → route to `high-priority-pods` subset; default route → `standard-pods` subset
 
 **Checkpoint**: `kubectl apply -f config/samples/` succeeds on kind cluster; after controller reconciles, `kubectl get pods -L tier` shows 2 high and 2 standard pods.
 
@@ -146,12 +146,12 @@
 
 **Purpose**: Deployment manifest, RBAC, Dockerfile, CI validation, final test run.
 
-- [ ] T031 [P] Create `config/manager/manager.yaml` Deployment: namespace `mesh-priority-system`, `replicas: 2`, `securityContext.runAsNonRoot: true`, `securityContext.readOnlyRootFilesystem: true`, `resources.requests: {cpu: 50m, memory: 64Mi}`, `resources.limits: {cpu: 200m, memory: 128Mi}`
-- [ ] T032 [P] Update `config/rbac/role.yaml` ClusterRole with exact verbs per contracts/reconciler.md: `pods: get,list,watch,patch`; `podlabelerpolicies: get,list,watch`; `podlabelerpolicies/status: update,patch`; `events: create,patch`; `leases: get,list,watch,create,update,patch,delete`
-- [ ] T033 [P] Update `Dockerfile` for multi-stage build: builder stage `golang:latest`, runtime stage `gcr.io/distroless/static:nonroot`, `USER 65532:65532`
-- [ ] T034 Verify `hack/test-policy.sh` matches the CRD API group `mesh.knabben.github.com/v1alpha1` and runs cleanly against kind cluster (bash syntax check: `bash -n hack/test-policy.sh`)
-- [ ] T035 Run `make test` (`go test -race ./...` with `KUBEBUILDER_ASSETS` set) and confirm reconciler package coverage ≥ 80%; fix any coverage gaps
-- [ ] T036 [P] Run `golangci-lint run ./...` and resolve any lint violations in `internal/` and `cmd/`
+- [x] T031 [P] Create `config/manager/manager.yaml` Deployment: namespace `mesh-priority-system`, `replicas: 2`, `securityContext.runAsNonRoot: true`, `securityContext.readOnlyRootFilesystem: true`, `resources.requests: {cpu: 50m, memory: 64Mi}`, `resources.limits: {cpu: 200m, memory: 128Mi}`
+- [x] T032 [P] Update `config/rbac/role.yaml` ClusterRole with exact verbs per contracts/reconciler.md: `pods: get,list,watch,patch`; `podlabelerpolicies: get,list,watch`; `podlabelerpolicies/status: update,patch`; `events: create,patch`; `leases: get,list,watch,create,update,patch,delete`
+- [x] T033 [P] Update `Dockerfile` for multi-stage build: builder stage `golang:latest`, runtime stage `gcr.io/distroless/static:nonroot`, `USER 65532:65532`
+- [x] T034 Verify `hack/test-policy.sh` matches the CRD API group `mesh.knabben.github.com/v1alpha1` and runs cleanly against kind cluster (bash syntax check: `bash -n hack/test-policy.sh`)
+- [x] T035 Run `make test` (`go test -race ./...` with `KUBEBUILDER_ASSETS` set) and confirm reconciler package coverage ≥ 80%; fix any coverage gaps
+- [x] T036 [P] Run `golangci-lint run ./...` and resolve any lint violations in `internal/` and `cmd/`
 
 ---
 

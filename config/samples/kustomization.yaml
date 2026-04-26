@@ -1,0 +1,9 @@
+resources:
+- mesh_v1alpha1_podlabelerpolicy.yaml
+- mesh_v1alpha1_podlabelerpolicy_high.yaml
+- mesh_v1alpha1_podlabelerpolicy_standard.yaml
+- deployment.yaml
+- service.yaml
+- destinationrule.yaml
+- virtualservice.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

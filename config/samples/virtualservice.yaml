@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: tier-app-vs
+  namespace: default
+spec:
+  hosts:
+  - tier-app-svc
+  http:
+  - match:
+    - headers:
+        user-type:
+          exact: premium
+    route:
+    - destination:
+        host: tier-app-svc
+        subset: high-priority-pods
+  - route:
+    - destination:
+        host: tier-app-svc
+        subset: standard-pods

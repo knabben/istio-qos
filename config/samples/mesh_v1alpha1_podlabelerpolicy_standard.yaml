@@ -1,0 +1,7 @@
+apiVersion: mesh.knabben.github.com/v1alpha1
+kind: PodLabelerPolicy
+metadata:
+  name: policy-standard
+spec:
+  imagePattern: "*/tier-app-standard:*"
+  tier: standard

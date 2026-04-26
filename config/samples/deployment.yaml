@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tier-app-high
+  namespace: default
+  labels:
+    app: tier-app
+    variant: high
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tier-app
+      variant: high
+  template:
+    metadata:
+      labels:
+        app: tier-app
+        variant: high
+    spec:
+      containers:
+      - name: app
+        image: localhost:5000/tier-app-high:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tier-app-standard
+  namespace: default
+  labels:
+    app: tier-app
+    variant: standard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tier-app
+      variant: standard
+  template:
+    metadata:
+      labels:
+        app: tier-app
+        variant: standard
+    spec:
+      containers:
+      - name: app
+        image: localhost:5000/tier-app-standard:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
