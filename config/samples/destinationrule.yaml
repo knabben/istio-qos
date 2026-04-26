@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: tier-app-dr
+  namespace: default
+spec:
+  host: tier-app-svc
+  subsets:
+  - name: high-priority-pods
+    labels:
+      tier: high
+  - name: standard-pods
+    labels:
+      tier: standard

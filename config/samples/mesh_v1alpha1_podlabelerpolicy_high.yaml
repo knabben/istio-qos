@@ -1,0 +1,7 @@
+apiVersion: mesh.knabben.github.com/v1alpha1
+kind: PodLabelerPolicy
+metadata:
+  name: policy-high
+spec:
+  imagePattern: "*/tier-app-high:*"
+  tier: high

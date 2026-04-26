@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tier-app-svc
+  namespace: default
+spec:
+  selector:
+    app: tier-app
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
