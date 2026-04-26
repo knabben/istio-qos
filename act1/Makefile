@@ -3,7 +3,10 @@ ENVTEST_OS      ?= linux
 ENVTEST_ARCH    ?= amd64
 KUBEBUILDER_ASSETS ?= $(HOME)/.local/share/kubebuilder-envtest/k8s/$(ENVTEST_VERSION)-$(ENVTEST_OS)-$(ENVTEST_ARCH)
 
-.PHONY: setup-envtest build vet test-bugs test-bugs-assert-failures
+IMAGE_TAG ?= podlabeler:act1
+KIND_CLUSTER ?= istio-qos
+
+.PHONY: setup-envtest build vet test-bugs test-bugs-assert-failures docker-build kind-load cluster-deploy cluster-teardown
 
 setup-envtest:
 	go run sigs.k8s.io/controller-runtime/tools/setup-envtest@latest use $(ENVTEST_VERSION) --os $(ENVTEST_OS) --arch $(ENVTEST_ARCH)
@@ -25,3 +28,23 @@ test-bugs-assert-failures:
 		exit 1; \
 	fi; \
 	echo "ASSERTION PASSED: exactly 3 tests failed as expected"
+
+docker-build:
+	docker build -t $(IMAGE_TAG) .
+
+kind-load:
+	kind load docker-image $(IMAGE_TAG) --name $(KIND_CLUSTER)
+
+cluster-deploy:
+	kubectl apply -f manifests/crd.yaml
+	kubectl apply -f manifests/rbac.yaml
+	kubectl apply -f manifests/controller.yaml
+	kubectl apply -f manifests/sample-policies.yaml
+	kubectl apply -f manifests/sample-workload.yaml
+
+cluster-teardown:
+	kubectl delete -f manifests/sample-workload.yaml --ignore-not-found
+	kubectl delete -f manifests/sample-policies.yaml --ignore-not-found
+	kubectl delete -f manifests/controller.yaml --ignore-not-found
+	kubectl delete -f manifests/rbac.yaml --ignore-not-found
+	kubectl delete -f manifests/crd.yaml --ignore-not-found

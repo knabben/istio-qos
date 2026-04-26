@@ -24,3 +24,12 @@ kubeconfig*
 *.crt
 *.secret.yaml
 secrets/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Claude Code local settings (machine-specific)
+.claude/settings.json
+.claude/settings.local.json
